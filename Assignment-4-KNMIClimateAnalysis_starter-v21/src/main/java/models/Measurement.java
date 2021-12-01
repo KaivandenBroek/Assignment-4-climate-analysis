@@ -1,6 +1,7 @@
 package models;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Map;
 
 public class Measurement {
@@ -47,43 +48,33 @@ public class Measurement {
      */
     public static Measurement fromLine(String textLine, Map<Integer, Station> stations) {
         String[] fields = textLine.split(",");
-        Double[] parsedFields = new Double[NUM_FIELDS * 2];
         if (fields.length < NUM_FIELDS)
             return null;
 
-        // TODO check bad station
-        // TODO check incomplete record
-        // TODO check cannot be parsed
-
         // create a new Measurement instance
-        Measurement m = new Measurement(stations.get(Integer.parseInt(fields[FIELD_STN].trim())),
+        final Measurement measurement = new Measurement(stations.get(Integer.parseInt(fields[FIELD_STN].trim())),
                 Integer.parseInt(fields[FIELD_YYMMDDDD].trim()));
 
-        // Parse and heck for empty values
-        for (int i = 0; i < fields.length; i++) {
-            fields[i] = fields[i].trim();
+        // create an array that can hold doubles, fill it with trimmed fields and fill
+        // the empty fields with double.NaN
+        // finally, devide the results to have the right unit of the measurement
+        double[] doubleFields = Arrays.stream(fields)
+                .map(String::trim)
+                .mapToDouble(fieldStr -> fieldStr.isEmpty() ? Double.NaN : Double.parseDouble(fieldStr))
+                .map(field -> field / 10)
+                .toArray();
 
-            // avoid making station and date double
-            if (i > 1) {
-                if (fields[i].isEmpty()) {
-                    parsedFields[i] = Double.NaN;
-                } else {
-                    parsedFields[i] = Double.parseDouble(fields[i]) / 10;
-                }
-            }
-        }
+        // fill the rest
+        measurement.setAverageWindSpeed(doubleFields[FIELD_FG]);
+        measurement.setMaxWindGust(doubleFields[FIELD_FXX]);
+        measurement.setAverageTemperature(doubleFields[FIELD_TG]);
+        measurement.setMinTemperature(doubleFields[FIELD_TN]);
+        measurement.setMaxTemperature(doubleFields[FIELD_TX]);
+        measurement.setSolarHours(doubleFields[FIELD_SQ]);
+        measurement.setPrecipitation(doubleFields[FIELD_RH]);
+        measurement.setMaxHourlyPrecipitation(doubleFields[FIELD_RHX]);
 
-        // further parse and convert and store all relevant quantities
-        m.setAverageWindSpeed(parsedFields[FIELD_FG]);
-        m.setMaxWindGust(parsedFields[FIELD_FXX]);
-        m.setAverageTemperature(parsedFields[FIELD_TG]);
-        m.setMinTemperature(parsedFields[FIELD_TN]);
-        m.setMaxTemperature(parsedFields[FIELD_TX]);
-        m.setSolarHours(parsedFields[FIELD_SQ]);
-        m.setPrecipitation(parsedFields[FIELD_RH]);
-        m.setMaxHourlyPrecipitation(parsedFields[FIELD_RHX]);
-
-        return m;
+        return measurement;
     }
 
     public Station getStation() {

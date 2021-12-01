@@ -13,7 +13,6 @@ public class StationTest {
         vlissingen = new Station(310, "Vlissingen");
     }
 
-
     @Test
     public void aStationHasAStringRepresentation() {
         assertEquals("260/De Bilt", deBilt.toString());

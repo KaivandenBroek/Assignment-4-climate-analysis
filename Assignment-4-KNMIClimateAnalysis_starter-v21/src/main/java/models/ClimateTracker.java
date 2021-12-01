@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ClimateTracker {
     private final String MEASUREMENTS_FILE_PATTERN = ".*\\.txt";
@@ -14,8 +15,7 @@ public class ClimateTracker {
 
     public Set<Station> getStations() {
         // TODO return all stations in this tracker
-
-        return Set.of();
+        return Set.of(stations.values().toArray(Station[]::new));
     }
 
     public Station findStationById(int stn) {
@@ -41,7 +41,7 @@ public class ClimateTracker {
         // stream/iterate over the stations, count the amount of measurements and put it
         // in a map
         Map<Station, Integer> map = new HashMap<>();
-        stations.values().parallelStream().forEach(station -> map.put(station, station.getMeasurements().size()));
+        stations.values().stream().forEach(station -> map.put(station, station.getMeasurements().size()));
 
         return map;
     }
@@ -55,19 +55,11 @@ public class ClimateTracker {
     public Map<Station, LocalDate> firstDayOfMeasurementByStation() {
         // TODO build a map resolving for each station the date of its first day of
         // measurements
-
-        // Map<Station, LocalDate> map = new HashMap<>();
-        // final LocalDate date = LocalDate.now();
-
-        // stations.values().parallelStream().forEach(station ->
-        // station.getMeasurements().stream().forEach(measurement -> date =
-        // measurement.getDate()));
-
-        // stations.values().parallelStream().forEach(station ->
-        // map.put(station, date));
-
-        // return map;
-        return null;
+        return stations.values().stream()
+                .filter(station -> station.firstDayOfMeasurement().isPresent())
+                .collect(Collectors.toMap(
+                        s -> s,
+                        s -> s.firstDayOfMeasurement().get()));
     }
 
     /**

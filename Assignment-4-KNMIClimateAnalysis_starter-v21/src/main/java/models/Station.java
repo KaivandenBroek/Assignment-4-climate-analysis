@@ -2,14 +2,20 @@ package models;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Station {
     private final int stn;
     private final String name;
-    private NavigableMap<LocalDate, Measurement> measurements;
+    private NavigableMap<LocalDate, Measurement> measurements = new TreeMap<>();
 
     public Station(int id, String name) {
         this.stn = id;
@@ -67,6 +73,20 @@ public class Station {
         // ignore those who are not related to this station and entries with a duplicate
         // date.
 
+        // add a set to store a measurement per date to filter out duplicates
+        final Set<LocalDate> datesSeen = new HashSet<>();
+        // create a map to store all filtered new measurements
+        final Map<LocalDate, Measurement> afterFilter = newMeasurements.stream()
+                .filter(measurement -> measurement.getStation().equals(this))
+                .filter(measurement -> {
+                    final boolean dateIsDuplicate = datesSeen.contains(measurement.getDate());
+                    datesSeen.add(measurement.getDate());
+                    return !dateIsDuplicate;
+                })
+                .collect(Collectors.toMap(Measurement::getDate, m -> m));
+
+        this.measurements.putAll(afterFilter);
+
         return this.getMeasurements().size() - oldSize;
     }
 
@@ -79,7 +99,10 @@ public class Station {
     public double allTimeMaxTemperature() {
         // TODO calculate the maximum wind gust speed across all valid measurements
 
-        return Double.NaN;
+        // stream trough the temperatures and return the biggest one
+        return measurements.values().stream()
+                .collect(Collectors.summarizingDouble(measurement -> measurement.getAverageTemperature())).getMax();
+        // return Double.NaN;
     }
 
     /**
@@ -89,21 +112,9 @@ public class Station {
     public Optional<LocalDate> firstDayOfMeasurement() {
         // TODO get the date of the first measurement at this station
 
-        if (measurements.isEmpty()) {
-            return Optional.empty();
-        }
-
-        measurements.get(stn).getDate();
-        Optional<LocalDate> firstDate = Optional.of(measurements.firstEntry().getValue().getDate());
-
-        for (int i = 0; i < measurements.size(); i++) {
-            if (measurements.get(i).getDate().isAfter(measurements.get(i + 1).getDate())) {
-                firstDate = Optional.of(measurements.get(i + 1).getDate());
-            }
-        }
-
-        return firstDate;
-        // return Optional.empty();
+        // retrieve measurements, find minimal date
+        return measurements.keySet().stream()
+                .min(Comparator.comparing(LocalDate::toEpochDay));
     }
 
     /**
@@ -121,6 +132,7 @@ public class Station {
         // measurements collection
         // by means of the mapper access function
 
+        int counter = 0;
         return 0;
     }
 
@@ -137,6 +149,8 @@ public class Station {
         // TODO calculate and return the total precipitation across the given period
         // use the 'subMap' method to only process the measurements within the given
         // period
+
+        // bereken neerslag in periode
 
         return 0.0;
     }
