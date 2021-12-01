@@ -16,16 +16,16 @@ public class Measurement {
     private final static int FIELD_RHX = 23;
     private final static int NUM_FIELDS = 24;
 
-    private final Station station;            // col0, STN
-    private final LocalDate date;             // col1, YYMMDDDD
-    private double averageWindSpeed;    // col4, FG in m/s  from 0.1 m/s
-    private double maxWindGust;         // col9, FXX in m/s  from 0.1 m/s
-    private double averageTemperature;  // col11, TG in degC  from 0.1 degC
-    private double minTemperature;      // col12, TN in degC  from 0.1 degC
-    private double maxTemperature;      // col14, TX in degC  from 0.1 degC
-    private double solarHours;          // col18, SQ in hours  from 0.1 h
-    private double precipitation;       // col22, RH in mm  from 0.1 mm, -1 = < 0.05
-    private double maxHourlyPrecipitation;   // col23, RHX in mm  from 0.1 mm, -1 = < 0.05
+    private final Station station; // col0, STN
+    private final LocalDate date; // col1, YYMMDDDD
+    private double averageWindSpeed; // col4, FG in m/s from 0.1 m/s
+    private double maxWindGust; // col9, FXX in m/s from 0.1 m/s
+    private double averageTemperature; // col11, TG in degC from 0.1 degC
+    private double minTemperature; // col12, TN in degC from 0.1 degC
+    private double maxTemperature; // col14, TX in degC from 0.1 degC
+    private double solarHours; // col18, SQ in hours from 0.1 h
+    private double precipitation; // col22, RH in mm from 0.1 mm, -1 = < 0.05
+    private double maxHourlyPrecipitation; // col23, RHX in mm from 0.1 mm, -1 = < 0.05
 
     public Measurement(Station station, int dateNumber) {
         this.station = station;
@@ -33,27 +33,57 @@ public class Measurement {
     }
 
     /**
-     * converts a text line into a new Measurement instance
-     * processes columns # STN, YYYYMMDD, FG, FXX, TG, TN, TX, SQ, RH, RHX as per documentation in the text files
-     * converts integer values to doubles as per unit of measure indicators
-     * empty or corrupt values are replaced by Double.NaN
-     * -1 values that indicate < 0.05 are replaced by 0.0
+     * converts a text line into a new Measurement instance processes columns # STN,
+     * YYYYMMDD, FG, FXX, TG, TN, TX, SQ, RH, RHX as per documentation in the text
+     * files converts integer values to doubles as per unit of measure indicators
+     * empty or corrupt values are replaced by Double.NaN -1 values that indicate <
+     * 0.05 are replaced by 0.0
+     * 
      * @param textLine
-     * @param stations  a map of Stations that can be accessed by station number STN
-     * @return          a new Measurement instance that records all data values of above quantities
-     *                  null if the station number cannot be resolved,
-     *                      or the record is incomplete or cannot be parsed
+     * @param stations a map of Stations that can be accessed by station number STN
+     * @return a new Measurement instance that records all data values of above
+     *         quantities null if the station number cannot be resolved, or the
+     *         record is incomplete or cannot be parsed
      */
-    public static Measurement fromLine(String textLine, Map<Integer,Station> stations) {
+    public static Measurement fromLine(String textLine, Map<Integer, Station> stations) {
         String[] fields = textLine.split(",");
-        if (fields.length < NUM_FIELDS) return null;
+        Double[] parsedFields = new Double[NUM_FIELDS * 2];
+        if (fields.length < NUM_FIELDS)
+            return null;
 
-        // TODO create a new Measurement instance
-        //  further parse and convert and store all relevant quantities
+        // TODO check bad station
+        // TODO check incomplete record
+        // TODO check cannot be parsed
 
+        // create a new Measurement instance
+        Measurement m = new Measurement(stations.get(Integer.parseInt(fields[FIELD_STN].trim())),
+                Integer.parseInt(fields[FIELD_YYMMDDDD].trim()));
 
+        // Parse and heck for empty values
+        for (int i = 0; i < fields.length; i++) {
+            fields[i] = fields[i].trim();
 
-        return null;
+            // avoid making station and date double
+            if (i > 1) {
+                if (fields[i].isEmpty()) {
+                    parsedFields[i] = Double.NaN;
+                } else {
+                    parsedFields[i] = Double.parseDouble(fields[i]) / 10;
+                }
+            }
+        }
+
+        // further parse and convert and store all relevant quantities
+        m.setAverageWindSpeed(parsedFields[FIELD_FG]);
+        m.setMaxWindGust(parsedFields[FIELD_FXX]);
+        m.setAverageTemperature(parsedFields[FIELD_TG]);
+        m.setMinTemperature(parsedFields[FIELD_TN]);
+        m.setMaxTemperature(parsedFields[FIELD_TX]);
+        m.setSolarHours(parsedFields[FIELD_SQ]);
+        m.setPrecipitation(parsedFields[FIELD_RH]);
+        m.setMaxHourlyPrecipitation(parsedFields[FIELD_RHX]);
+
+        return m;
     }
 
     public Station getStation() {
