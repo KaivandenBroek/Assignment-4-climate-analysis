@@ -2,6 +2,7 @@ package models;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Station {
     private final int stn;
@@ -27,7 +29,6 @@ public class Station {
 
     public Collection<Measurement> getMeasurements() {
         // TODO return the measurements of this station
-        // TODO klopt dit?
 
         return measurements.values();
     }
@@ -99,9 +100,17 @@ public class Station {
     public double allTimeMaxTemperature() {
         // TODO calculate the maximum wind gust speed across all valid measurements
 
-        // stream trough the temperatures and return the biggest one
+        // stream trough the temperatures and filter unvalid entries
+        // collect and return the biggest one
         return measurements.values().stream()
-                .collect(Collectors.summarizingDouble(measurement -> measurement.getAverageTemperature())).getMax();
+                .map(measurement -> {
+                    try {
+                        return measurement.getAverageTemperature();
+                    } catch (NumberFormatException e) {
+                        return Double.NaN;
+                    }
+                })
+                .collect(Collectors.summarizingDouble(measurement -> measurement)).getMax();
         // return Double.NaN;
     }
 
@@ -132,8 +141,15 @@ public class Station {
         // measurements collection
         // by means of the mapper access function
 
-        int counter = 0;
-        return 0;
+        // use collections.frequency to count the values
+        // and use the mapper to only do that when they are valid
+        // also map to double to be able to count
+        return Collections.frequency(
+                measurements.values().stream()
+                        .map(mapper)
+                        .map(Double::doubleToRawLongBits)
+                        .collect(Collectors.toList()),
+                1);
     }
 
     /**
@@ -150,9 +166,10 @@ public class Station {
         // use the 'subMap' method to only process the measurements within the given
         // period
 
-        // bereken neerslag in periode
-
-        return 0.0;
+        // retrieves measurements from period
+        // maps the sum of the precipitation values
+        return measurements.subMap(startDate, endDate).values().stream()
+                .mapToDouble(measurement -> measurement.getPrecipitation()).sum();
     }
 
     /**
@@ -174,7 +191,25 @@ public class Station {
         // use the 'subMap' method to only process the measurements within the given
         // period
 
-        return Double.NaN;
+        // return measurements.subMap(startDate, endDate).values().stream()
+        // .collect(Collectors.averagingDouble(mapper));
+
+        // return measurements.subMap(startDate, endDate).values().stream()
+        // .map(mapper)
+        // .map(Double::doubleValue)
+        // .collect(Collectors.toList()).mapToDouble(Integer::doubleValue).average();
+
+        // retrieve measurements from the period/
+        // map by given mapper
+        // convert to double and retrieve average
+        return measurements.subMap(startDate, endDate).values().stream()
+                .map(mapper)
+                .mapToDouble(value -> value.doubleValue()).average().getAsDouble();
+    }
+
+    // a toString method for the stationtest
+    public String toString() {
+        return (getStn() + "/" + getName());
     }
 
     // TODO any other methods required to make it work
