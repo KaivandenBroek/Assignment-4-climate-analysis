@@ -77,7 +77,22 @@ public class ClimateTracker {
         // TODO build a map resolving for each station the number of valid values for
         // the specified quantity.
 
-        return null;
+        // create map that can holds with each avg temp
+        Map<Station, Integer> map = new HashMap<>();
+
+        // create list to store measurements
+        Collection<Measurement> measurements = new ArrayList<Measurement>();
+
+        // retrieve measurements of station
+        stations.values().stream().forEach(station -> measurements.addAll(station.getMeasurements()));
+
+        // use mapper
+        measurements.stream()
+                .map(mapper);
+
+        // put valid in map? TODO
+
+        return map;
     }
 
     /**
@@ -93,7 +108,26 @@ public class ClimateTracker {
         // TODO build a map collecting for each year the average temperature in that
         // year
 
-        return null;
+        // create map that can holds with each avg temp
+        Map<Integer, Double> map = new HashMap<>();
+
+        // create list to store measurements
+        Collection<Measurement> measurements = new ArrayList<Measurement>();
+
+        // retrieve all years from all stations
+        // put the avg temp for all stations per year
+
+        // retrieve measurements of station
+        stations.values().stream().forEach(station -> measurements.addAll(station.getMeasurements()));
+
+        // TODO filter?
+
+        // fill map with measurement year and avg temp
+        measurements.stream()
+                .forEach(measurement -> map.put(measurement.getDate().getYear(),
+                        measurement.getAverageTemperature()));
+
+        return map;
     }
 
     /**
@@ -114,7 +148,9 @@ public class ClimateTracker {
         // TODO build a map collecting for each year the maximum value of the mapped
         // quantity in that year
 
-        return null;
+        Map<Integer, Double> map = new HashMap<>();
+
+        return map;
     }
 
     /**
